@@ -1,7 +1,5 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
-import Joi from "joi";
-import passwordComplexity from "joi-password-complexity";
 
 const userSchema = mongoose.Schema(
   {
@@ -39,14 +37,4 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 
 const User = mongoose.model("User", userSchema);
 
-// Describe data using joi
-const validate = (data) => {
-  const schema = Joi.object({
-    name: Joi.string().required().label("Name"),
-    email: Joi.string().email().required().label("Email"),
-    password: passwordComplexity().required().label("Password"),
-  });
-  return schema.validate(data);
-};
-
-export { User, validate };
+export default User;

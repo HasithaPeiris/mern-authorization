@@ -1,13 +1,23 @@
-import { User, validate } from "../models/userModel.js";
+import User from "../models/userModel.js";
 import generateToken from "../utils/generateToken.js";
+import {
+  validateRegister,
+  validateLogin,
+} from "../middleware/authMiddleware.js";
 
 // @desc Auth user/set token
 // route POST /api/users/auth
 // @access Public
 const authUser = async (req, res) => {
-  const { email, password } = req.body;
-
   try {
+    // Validate user data
+    const { error } = validateLogin(req.body);
+    if (error) {
+      return res.status(400).send({ message: error.details[0].message });
+    }
+
+    const { email, password } = req.body;
+
     const user = await User.findOne({ email });
 
     if (user && (await user.matchPassword(password))) {
@@ -27,33 +37,27 @@ const authUser = async (req, res) => {
 // @access Public
 const registerUser = async (req, res) => {
   try {
-    const { error } = validate(req.body);
-
     // Validate user data
+    const { error } = validateRegister(req.body);
     if (error) {
       return res.status(400).send({ message: error.details[0].message });
     }
 
+    // Check existing users
     const { name, email, password } = req.body;
-
     const userExists = await User.findOne({ email });
-
     if (userExists) {
       res.status(400);
       throw new Error("User already exists");
     }
 
-    const newUser = new User({
-      name,
-      email,
-      password,
-    });
+    // Create a new user
+    const newUser = await User.create({ name, email, password });
 
-    const savedUser = await newUser.save();
+    // Generate JWT
+    generateToken(res, newUser._id);
 
-    generateToken(res, savedUser._id);
-
-    res.status(201).json(savedUser);
+    res.status(201).json(newUser);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

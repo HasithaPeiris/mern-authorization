@@ -1,5 +1,7 @@
 import jwt from "jsonwebtoken";
-import { User } from "../models/userModel.js";
+import Joi from "joi";
+import passwordComplexity from "joi-password-complexity";
+import User from "../models/userModel.js";
 
 const protect = async (req, res, next) => {
   try {
@@ -28,4 +30,23 @@ const protect = async (req, res, next) => {
   }
 };
 
-export { protect };
+// Validate register using joi
+const validateRegister = (data) => {
+  const schema = Joi.object({
+    name: Joi.string().required().label("Name"),
+    email: Joi.string().email().required().label("Email"),
+    password: passwordComplexity().required().label("Password"),
+  });
+  return schema.validate(data);
+};
+
+// Validate login using joi
+const validateLogin = (data) => {
+  const schema = Joi.object({
+    email: Joi.string().email().required().label("Email"),
+    password: passwordComplexity().required().label("Password"),
+  });
+  return schema.validate(data);
+};
+
+export { protect, validateRegister, validateLogin };
