@@ -1,4 +1,4 @@
-import User from "../models/userModel.js";
+import { User, validate } from "../models/userModel.js";
 import generateToken from "../utils/generateToken.js";
 
 // @desc Auth user/set token
@@ -26,9 +26,16 @@ const authUser = async (req, res) => {
 // route POST /api/users
 // @access Public
 const registerUser = async (req, res) => {
-  const { name, email, password } = req.body;
-
   try {
+    const { error } = validate(req.body);
+
+    // Validate user data
+    if (error) {
+      return res.status(400).send({ message: error.details[0].message });
+    }
+
+    const { name, email, password } = req.body;
+
     const userExists = await User.findOne({ email });
 
     if (userExists) {

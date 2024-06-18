@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
+import Joi from "joi";
+import passwordComplexity from "joi-password-complexity";
 
 const userSchema = mongoose.Schema(
   {
@@ -26,7 +28,7 @@ userSchema.pre("save", async function (next) {
     next();
   }
 
-  const salt = await bcrypt.genSalt(10);
+  const salt = await bcrypt.genSalt(Number(process.env.SALT));
   this.password = await bcrypt.hash(this.password, salt);
 });
 
@@ -37,4 +39,14 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 
 const User = mongoose.model("User", userSchema);
 
-export default User;
+// Describe data using joi
+const validate = (data) => {
+  const schema = Joi.object({
+    name: Joi.string().required().label("Name"),
+    email: Joi.string().email().required().label("Email"),
+    password: passwordComplexity().required().label("Password"),
+  });
+  return schema.validate(data);
+};
+
+export { User, validate };
